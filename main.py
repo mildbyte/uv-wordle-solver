@@ -32,14 +32,15 @@ def generate_packages(directory):
     default="./output",
     type=click.Path(),
 )
-def run_solver(project_dir, output_dir):
+@click.option("-s", "--no-suppress", is_flag=True)
+def run_solver(project_dir, output_dir, no_suppress):
     packages_path = Path(output_dir)
     if not packages_path.exists():
         print("Packages constraining the solution not found, generating...")
         _generate_packages(output_dir)
 
     wheels_dir = str((Path(output_dir) / "wheels").absolute())
-    solver.run_solver_loop(project_dir, wheels_dir)
+    solver.run_solver_loop(project_dir, wheels_dir, no_suppress)
 
 
 @click.group(name="wordle_solver")

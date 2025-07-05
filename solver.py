@@ -84,7 +84,9 @@ def make_problem_package(deps_list: DepsList) -> dict[str, Any]:
     return package
 
 
-def exec_resolution(deps_list: DepsList, work_dir: str, wheels_dir: str) -> str | None:
+def exec_resolution(
+    deps_list: DepsList, work_dir: str, wheels_dir: str, no_suppress: bool
+) -> str | None:
     package = make_problem_package(deps_list)
 
     package_dir = Path(work_dir)
@@ -99,8 +101,8 @@ def exec_resolution(deps_list: DepsList, work_dir: str, wheels_dir: str) -> str 
     proc = subprocess.run(
         ["uv", "lock", "--find-links", wheels_dir],
         cwd=package_dir,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stdout=None if no_suppress else subprocess.PIPE,
+        stderr=None if no_suppress else subprocess.PIPE,
     )
     if proc.returncode != 0:
         output = proc.stderr.decode()
@@ -124,10 +126,16 @@ def exec_resolution(deps_list: DepsList, work_dir: str, wheels_dir: str) -> str 
     return word
 
 
-def run_solver_loop(work_dir: str, wheels_dir: str) -> None:
+def run_solver_loop(work_dir: str, wheels_dir: str, no_suppress: bool) -> None:
     current_deps_list: DepsList = []
+
+    # Delete the lockfile so we start from scratch
+    lockfile = Path(work_dir) / "uv.lock"
+    if lockfile.exists():
+        lockfile.unlink()
+
     while True:
-        word = exec_resolution(current_deps_list, work_dir, wheels_dir)
+        word = exec_resolution(current_deps_list, work_dir, wheels_dir, no_suppress)
         if not word:
             print("I give up!")
             return
