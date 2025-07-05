@@ -10,7 +10,7 @@ from tqdm.contrib.concurrent import thread_map
 from templates import PREFIX, BUILD_BACKEND
 from words import WORD_IDS, WORDS
 
-LETTERS = "abcdefghijklmnopqrstvwxyz"
+LETTERS = "abcdefghijklmnopqrstuvwxyz"
 INDEX = "./output/index"
 
 
