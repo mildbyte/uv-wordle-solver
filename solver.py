@@ -85,7 +85,11 @@ def make_problem_package(deps_list: DepsList) -> dict[str, Any]:
 
 
 def exec_resolution(
-    deps_list: DepsList, work_dir: str, wheels_dir: str, no_suppress: bool
+    deps_list: DepsList,
+    work_dir: str,
+    wheels_dir: str,
+    no_suppress: bool,
+    no_emit_project: bool,
 ) -> str | None:
     package = make_problem_package(deps_list)
 
@@ -94,8 +98,9 @@ def exec_resolution(
     with open(package_dir / "pyproject.toml", "w") as f:
         package_toml = toml.dumps(package)
         f.write(package_toml)
-    print("Generated package:")
-    print(package_toml)
+    if not no_emit_project:
+        print("Generated package:")
+        print(package_toml)
 
     # Execute resolution
     proc = subprocess.run(
@@ -126,7 +131,9 @@ def exec_resolution(
     return word
 
 
-def run_solver_loop(work_dir: str, wheels_dir: str, no_suppress: bool) -> None:
+def run_solver_loop(
+    work_dir: str, wheels_dir: str, no_suppress: bool, no_emit_project: bool
+) -> None:
     current_deps_list: DepsList = []
 
     # Delete the lockfile so we start from scratch
@@ -135,7 +142,9 @@ def run_solver_loop(work_dir: str, wheels_dir: str, no_suppress: bool) -> None:
         lockfile.unlink()
 
     while True:
-        word = exec_resolution(current_deps_list, work_dir, wheels_dir, no_suppress)
+        word = exec_resolution(
+            current_deps_list, work_dir, wheels_dir, no_suppress, no_emit_project
+        )
         if not word:
             print("I give up!")
             return
