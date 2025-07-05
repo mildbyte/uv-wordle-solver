@@ -1,6 +1,14 @@
 import package_generator
 import click
 import solver
+from pathlib import Path
+
+
+def _generate_packages(directory):
+    print("Generating package project files...")
+    package_generator.build_package_dir(directory)
+    print("Building wheels...")
+    package_generator.publish_packages(directory)
 
 
 @click.command("generate-packages")
@@ -10,10 +18,7 @@ import solver
     type=click.Path(dir_okay=True, file_okay=False, exists=False),
 )
 def generate_packages(directory):
-    print("Generating package project files...")
-    package_generator.build_package_dir(directory)
-    print("Building wheels...")
-    package_generator.publish_packages(directory)
+    _generate_packages(directory)
 
 
 @click.command("run")
@@ -23,11 +28,17 @@ def generate_packages(directory):
     type=click.Path(),
 )
 @click.argument(
-    "wheels_dir",
-    default="../output/wheels",
+    "output_dir",
+    default="./output",
     type=click.Path(),
 )
-def run_solver(project_dir, wheels_dir):
+def run_solver(project_dir, output_dir):
+    packages_path = Path(output_dir)
+    if not packages_path.exists():
+        print("Packages constraining the solution not found, generating...")
+        _generate_packages(output_dir)
+
+    wheels_dir = str((Path(output_dir) / "wheels").absolute())
     solver.run_solver_loop(project_dir, wheels_dir)
 
 
