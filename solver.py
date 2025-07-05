@@ -96,7 +96,6 @@ def exec_resolution(deps_list: DepsList, work_dir: str, wheels_dir: str) -> str 
     print(package_toml)
 
     # Execute resolution
-    # TODO: detect failure
     proc = subprocess.run(
         ["uv", "lock", "--find-links", wheels_dir],
         cwd=package_dir,

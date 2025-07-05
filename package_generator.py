@@ -108,9 +108,7 @@ def emit_exact_position_package(letter: str, position: int) -> dict[str, Any]:
 
     # We also need to exclude any other letters from this position
     other_letter_not_allowed_versions = [v for v in range(32) if bool(v & mask)]
-    other_letter_spec = ",".join(
-        f"!={v}.0.0" for v in other_letter_not_allowed_versions
-    )
+    other_letter_spec = ",".join(f"!={v}" for v in other_letter_not_allowed_versions)
     package["project"]["dependencies"].extend(
         [
             get_possible_position_package_name(other_letter) + " " + other_letter_spec
