@@ -1,0 +1,17 @@
+[project]
+name = "uv-wordle-solver"
+version = "0.1.0"
+description = "Solve Wordle using uv's dependency resolver!"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "click>=8.2.1",
+    "toml>=0.10.2",
+    "tqdm>=4.67.1",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.12.2",
+    "types-toml>=0.10.8.20240310",
+]
