@@ -4,8 +4,11 @@ from typing import Any
 
 import toml
 
-from package_generator import get_feedback_package_name, get_feedback_package_version
-from templates import PREFIX
+from package_generator import (
+    get_feedback_package_name,
+    get_feedback_package_version,
+    PREFIX,
+)
 from words import WORDS
 
 DepsList = list[tuple[str, list[int], bool]]

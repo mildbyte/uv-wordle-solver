@@ -7,11 +7,16 @@ import shutil
 import toml
 from tqdm.contrib.concurrent import thread_map
 
-from templates import PREFIX, BUILD_BACKEND
 from words import WORD_IDS, WORDS
 
 LETTERS = "abcdefghijklmnopqrstuvwxyz"
 INDEX = "./output/index"
+PREFIX = "wordle_"
+BUILD_BACKEND = toml.loads("""
+[build-system]
+requires = ["uv_build>=0.7.19,<0.8.0"]
+build-backend = "uv_build"
+""")
 
 
 def get_feedback_package_name(letter: str, positions: list[int]) -> str:
@@ -19,7 +24,7 @@ def get_feedback_package_name(letter: str, positions: list[int]) -> str:
 
 
 def get_feedback_package_version(is_true: bool) -> str:
-    return "1.0.0" if is_true else "0.0.0"
+    return "1" if is_true else "0"
 
 
 def get_possible_position_package_name(letter: str) -> str:
@@ -40,7 +45,7 @@ def decode_position_mask(encoded_position: int) -> list[int]:
 
 
 def get_possible_position_package_version(positions: list[int]) -> str:
-    return f"{encode_position_mask(positions)}.0.0"
+    return str(encode_position_mask(positions))
 
 
 def get_exact_position_package_name(position: int) -> str:
@@ -48,7 +53,7 @@ def get_exact_position_package_name(position: int) -> str:
 
 
 def get_exact_position_package_version(letter: str) -> str:
-    return f"{ord(letter) - ord('a') + 1}.0.0"
+    return str(ord(letter) - ord("a") + 1)
 
 
 def emit_feedback_package(
@@ -65,7 +70,7 @@ def emit_feedback_package(
     # one version overlaps with us (or none overlap with us if we're not supposed to match)
 
     # Unfortunately, we can't do ORs in dependency specs in Python, so instead
-    # we flip it and instead of doing ==1.0.0, ==2.0.0, we do !=3.0.0, !=4.0.0 etc
+    # we flip it and instead of doing ==1, ==2, we do !=3, !=4 etc
 
     not_allowed_versions = [
         v for v in range(32) if not (bool(v & encoded_positions) ^ (not is_true))
@@ -73,7 +78,7 @@ def emit_feedback_package(
     package["project"]["dependencies"] = [
         get_possible_position_package_name(letter)
         + " "
-        + ",".join(f"!={v}.0.0" for v in not_allowed_versions)
+        + ",".join(f"!={v}" for v in not_allowed_versions)
     ]
 
     return package
@@ -82,7 +87,7 @@ def emit_feedback_package(
 def emit_possible_position_package(letter: str, encoded_version: int) -> dict[str, Any]:
     package: dict[str, Any] = {"project": {}}
     package["project"]["name"] = get_possible_position_package_name(letter)
-    package["project"]["version"] = f"{encoded_version}.0.0"
+    package["project"]["version"] = str(encoded_version)
     package.update(**BUILD_BACKEND)
     return package
 
@@ -98,7 +103,7 @@ def emit_exact_position_package(letter: str, position: int) -> dict[str, Any]:
     package["project"]["dependencies"] = [
         get_possible_position_package_name(letter)
         + " "
-        + ",".join(f"!={v}.0.0" for v in not_allowed_versions)
+        + ",".join(f"!={v}" for v in not_allowed_versions)
     ]
 
     # We also need to exclude any other letters from this position
@@ -120,7 +125,7 @@ def emit_exact_position_package(letter: str, position: int) -> dict[str, Any]:
 def emit_word_package(word: str) -> dict[str, Any]:
     package: dict[str, Any] = {"project": {}}
     package["project"]["name"] = f"{PREFIX}word"
-    package["project"]["version"] = f"{WORD_IDS[word]}.0.0"
+    package["project"]["version"] = str(WORD_IDS[word])
     package.update(**BUILD_BACKEND)
 
     # Emit dependencies on exact position packages, e.g.
@@ -147,7 +152,7 @@ def write_package_content(directory: str, package_name: str, package: dict[str, 
 def build_package_dir(directory):
     # Build word packages
     for word in WORDS:
-        version_dir = os.path.join(directory, f"{PREFIX}word-{WORD_IDS[word]}.0.0")
+        version_dir = os.path.join(directory, f"{PREFIX}word-{WORD_IDS[word]}")
         write_package_content(version_dir, f"{PREFIX}word", emit_word_package(word))
 
     # Build exact position packages
@@ -168,7 +173,7 @@ def build_package_dir(directory):
             package_name = get_possible_position_package_name(letter)
             version_dir = os.path.join(
                 directory,
-                f"{package_name}-{encoded_version}.0.0",
+                f"{package_name}-{encoded_version}",
             )
             write_package_content(
                 version_dir,
